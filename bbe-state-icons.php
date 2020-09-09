@@ -103,7 +103,7 @@ function fetch_state_name_info ( $thisState ) {
 	if( strlen( $thisState ) === 2 ) {
 		$myStateInfo = $arStates[$thisState];
 	} else {
-		// Longer than 2 letters reverser the key with the value so we can
+		// Longer than 2 letters. Reverse the key and value so we can
 		// try to see if the full state name was entered/passed instead.
 		$arrayFlipped = array_flip( $arStates );
 		$myStateInfo = $arrayFlipped[$thisState];
@@ -114,7 +114,7 @@ function fetch_state_name_info ( $thisState ) {
 
 /*
 	Given a two letter US state abbreviation return the file name of an icon of the state.
-	If the file doesn't exist, return an error message or default image (TBF).
+	If the file doesn't exist, return an error message or default image (TBD).
 	If for some reason the function is passed a string that is longer than two letters, it
 	will check if the string is a valid state name and recover.
 */		
@@ -143,10 +143,9 @@ function fetch_state_icon( $thisState, $thisFileType = 'svg' ) {
 		// URL as opposed to folder
 		$myImage = 	plugin_dir_url( __FILE__ ) . 'assets/' . $myImgFile;
 		$myAlt = fetch_state_name_info( $myState );
+		
 		$myHTML  = '<div class="bbe-state-icon">';
-		$myHTML .= '<img src="' .	$myImage . '"' .
-								' alt="Project location: ' . 	$myAlt . '."' . 
-								'>'; 
+		$myHTML .= file_get_contents( $myPath . $myImgFile );
 		$myHTML .= '</div>';
 
 	} else {
