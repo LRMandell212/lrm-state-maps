@@ -1,4 +1,3 @@
-
 # ignore all files starting with . or ~
 .*
 ~*
@@ -55,3 +54,7 @@ assets/in*
 !README.md
 !CHANGELOG.md
 !composer.json
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5f15b4eee7efe3e35c27105e99a6ec37d7a0750c
