@@ -2,25 +2,34 @@
 /*
 Plugin Name: BBE State Icons
 Description: Get SVG icons for a US State
-Version: 0.0.2
+Version: 0.1.0
 Author: Lee Mandell
 */
 
 /* TOC
 		=FUNCTIONS
 		- fetch_state_name_info( $thisState )
-		- fetch_state_icon( $thisState )
-			- call it in the template like this: 
-				echo fetch_state_icon( $myState );
-				where $myState = get_post_meta( $post->ID, 'state', true );
+		- fetch_state_map( $thisState )
+			- call it like this: 
+				fetch_state_map( $myState, [$myOptions] );
+				Where:
+				- $myState is the two-letter State abbreviations
+				- $myOptions is an optional associative array with any of the following
+					'img-filetype' => 'svg',
+					'img-class' => 'bbe-state-icon',
+					'img-id' => 'bbe-' . $myState,
+					'container' => 'div',
+					'container-class' => 'bbe-state-frame',
+					'container-id' => 'bbe-' . $myState . '-frame;,
+					]);
 */
 
 /* $$$ TODO
 	* Alternate error handling strategy - return a broken image (this will show the developer the error!!)
 		- But if something happens to the live install will be broken.
-	* Is there a way to display the icon inline?
+	-* Is there a way to display the icon inline? Yes - Done!
 	* Do we want need to create a basic css file that is loaded with the plugin?
-	* Create a parameter that is an options array.
+	-* Create a parameter that is an options array.
 		- We could then pass in the:
 			- File type (svg, png, jpg, gif, etc.).
 			- The img class or ID.
@@ -118,35 +127,78 @@ function fetch_state_name_info ( $thisState ) {
 	If for some reason the function is passed a string that is longer than two letters, it
 	will check if the string is a valid state name and recover.
 */		
-
-function fetch_state_icon( $thisState, $thisFileType = 'svg' ) {
+function fetch_state_map( $thisState, $theseOptions=[] ) {
 
 	$myState = $thisState;
+	$myImgFileType = 'svg'; //default value
 	
 	if( strlen( $thisState ) < 2 ) {
-		// write error to log file?
+		// $thisState is empty or only 1 character. Write error to log file?
 		return;	
 	}
 
+	if (! empty($theseOptions) ) {
+		if( array_key_exists( 'img-filetype', $theseOptions ) ) { $myImgFileType = $theseOptions['img-filetype']; }
+		if( array_key_exists( 'img-class', $theseOptions ) ) { $myImgClass = $theseOptions['img-class']; }
+		if( array_key_exists( 'img-id', $theseOptions ) ) { $myImgID = $theseOptions['img-id']; }
+		if( array_key_exists( 'img-alt-prefix', $theseOptions ) ) { $myImgAltPrefix = $theseOptions['img-alt-prefix']; }
+		if( array_key_exists( 'container', $theseOptions ) ) { $myContainer = $theseOptions['container']; }
+		if( array_key_exists( 'container-class', $theseOptions ) ) { $myContainerClass = $theseOptions['container-class']; }
+		if( array_key_exists( 'container-id', $theseOptions ) ) { $myContainerID = $theseOptions['container-id']; }
+	}
+
 	if( strlen( $myState ) > 2 ) {
-		/*	See if the full state name was entered/passed instead.
+		/*	See if a full state name was entered/passed instead of the two letter abbreviation.
 				Make sure the user info matches the data by upper casing the first letter of each word.
-				Returns the proper 2 letter abbreviation so we can fall through and continue normally.
+				If a valid state name was entered, return the proper 2 letter abbreviation so we can 
+				fall through and continue normally.
 		*/
 		$myState = fetch_state_name_info( ucwords( $myState ) );
 	}
 
-	$myPath =  plugin_dir_path(__FILE__) . 'assets\\';
-	$myImgFile = strtolower($myState) . '.svg';
+	$myDirPath = plugin_dir_path(__FILE__) . 'assets\\';
+	$myURLPath = plugin_dir_url( __FILE__ ) . 'assets/';
+	$myImgFile = strtolower($myState) . '.' . $myImgFileType;
 
-	if( file_exists( $myPath . $myImgFile ) ) {
+	if( file_exists( $myDirPath . $myImgFile ) ) {
 		// URL as opposed to folder
-		$myImage = 	plugin_dir_url( __FILE__ ) . 'assets/' . $myImgFile;
-		$myAlt = fetch_state_name_info( $myState );
+		$myHTML = '';
+		$myImg = 	$myURLPath . $myImgFile;
+
+		$myAlt = ' alt="' . $myImgAltPrefix . fetch_state_name_info( $myState ) . '."';
 		
-		$myHTML  = '<div class="bbe-state-icon">';
-		$myHTML .= file_get_contents( $myPath . $myImgFile );
-		$myHTML .= '</div>';
+		// Setup container and image classes and ids.
+		if( ! empty( $myContainerID ) )	{ 
+			$myContainerID = ' id="' . $myContainerID . '"';
+		}
+
+		if( ! empty( $myContainerClass ) )	{ 
+			$myContainerClass = ' class="' . $myContainerClass . '"';
+		}
+
+		if( ! empty( $myImgID ) )	{ 
+			$myImgID = ' id="' . $myImgID . '"';
+		}
+
+		if( ! empty( $myImgClass ) )	{ 
+			$myImgClass = ' class="' . $myImgClass . '"';
+		}
+
+		// Generate the HTML
+		if( ! empty( $myContainer ) ) {
+			$myHTML .= '<' . $myContainer . $myContainerID . $myContainerClass . '>';
+		}
+
+		if( $myImgFileType === 'svg') {
+			// Display svg files inline.
+			$myHTML .= file_get_contents( $myDirPath . $myImgFile );
+		} else {
+			$myHTML .= '<img src="' . $myImg . '"' . $myImgID . $myImgClass . $myAlt . '>';
+		}
+		
+		if( ! empty( $myContainer ) ) {
+			$myHTML .= '</' . $myContainer . '>';
+		}
 
 	} else {
 		// return default image or error.
